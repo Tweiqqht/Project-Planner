@@ -10,12 +10,12 @@ const TaskManager = () => {
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
   const [priority, setPriority] = useState("Select Priority");
-  const [filterOrder, setFilterOrder] = useState('First-Created'); // Default to "First-Created"
+  const [filterOrder, setFilterOrder] = useState('First-Created');
   const [searchTerm, setSearchTerm] = useState('');
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser === null) {
         setIsGuest(true);
@@ -23,19 +23,22 @@ const TaskManager = () => {
         setTasks(savedTasks);
       } else {
         setIsGuest(false);
-        const fetchTasks = async () => {
-          try {
-            const q = query(collection(db, 'tasks'), where('userId', '==', currentUser.uid));
-            const querySnapshot = await getDocs(q);
-            setTasks(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-          } catch (error) {
-            console.error('Error fetching tasks:', error);
-          }
-        };
-        fetchTasks();
+        try {
+          const q = query(collection(db, 'tasks'), where('createdBy', '==', currentUser.uid));
+          const querySnapshot = await getDocs(q);
+          setTasks(
+            querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+              createdAt: doc.data().createdAt.toDate(),
+            }))
+          );
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+        }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
 
@@ -62,9 +65,8 @@ const TaskManager = () => {
           console.error("Error adding task:", error);
         }
       }
-      // Reset the fields
       setTask('');
-      setPriority('Select Priority'); // Reset the priority dropdown
+      setPriority('Select Priority');
     } else if (priority === "Select Priority") {
       alert("Please select a valid priority before submitting.");
     }
@@ -114,61 +116,67 @@ const TaskManager = () => {
 
   return (
     <div>
-      <div>
-        <h2>{user ? `Set your projects, ${user.email.split('@')[0]}!` : 'Set your projects!'}</h2>
-        <form onSubmit={addTask}>
-          <input
-            type="text"
-            value={task}
-            onChange={(e) => setTask(e.target.value)}
-            placeholder="Set a Project"
-            required
-          />
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            required
-          >
-            <option value="Select Priority" disabled>Select Priority</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-          <button type="submit" className="submitGoal">Submit Project</button>
-        </form>
-        <div className="filter">
-          <input
-            type="text"
-            placeholder="Search projects"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            value={filterOrder}
-            onChange={(e) => setFilterOrder(e.target.value)}
-          >
-            <option value="First-Created">No Filter</option>
-            <option value="High-Low">High to Low</option>
-            <option value="Low-High">Low to High</option>
-          </select>
-          <button onClick={clearFilter} className="clearFilterButton">Clear Filter</button>
-        </div>
+      {user || isGuest ? (
         <div>
-          <ul>
-            {filterTasks().length > 0 ? (
-              filterTasks().map((task, index) => (
-                <li key={task.id || index}>
-                  {task.task} - <strong>{task.priority}</strong>
-                  <button onClick={() => deleteTask(task.id || index)} className="deleteGoal">X</button>
-                </li>
-              ))
-            ) : (
-              <p className="noGoalsMessage">No projects made yet.</p>
-            )}
-          </ul>
-          {!user && <span className="loginSuggestion">Log in to save your projects.</span>}
+          <h2>{user ? `Set your projects, ${user.email.split('@')[0]}!` : 'Set your projects!'}</h2>
+          <form onSubmit={addTask}>
+            <input
+              type="text"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              placeholder="Set a Project"
+              required
+            />
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              required
+            >
+              <option value="Select Priority" disabled>Select Priority</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+            <button type="submit" className="submitGoal">Submit Project</button>
+          </form>
+          <div className="filter">
+            <input
+              type="text"
+              placeholder="Search projects"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <select
+              value={filterOrder}
+              onChange={(e) => setFilterOrder(e.target.value)}
+            >
+              <option value="First-Created">No Filter</option>
+              <option value="High-Low">High to Low</option>
+              <option value="Low-High">Low to High</option>
+            </select>
+            <button onClick={clearFilter} className="clearFilterButton">Clear Filter</button>
+          </div>
+          <div>
+            <ul>
+              {filterTasks().length > 0 ? (
+                filterTasks().map((task, index) => (
+                  <li key={task.id || index}>
+                    {task.task} - <strong>{task.priority}</strong>
+                    <button onClick={() => deleteTask(task.id || index)} className="deleteGoal">X</button>
+                  </li>
+                ))
+              ) : (
+                <p className="noGoalsMessage">No projects made yet.</p>
+              )}
+            </ul>
+            {!user && <span className="loginSuggestion">Log in to save your projects.</span>}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="lumaw">
+          <h2 className="title2">Please log in or register to save your projects</h2>
+        </div>
+      )}
     </div>
   );
 };

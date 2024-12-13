@@ -15,13 +15,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Firebase Authentication
 const auth = getAuth(app);
 
-// Firebase Firestore
 const db = getFirestore(app);
 
-// Function to sign up with email and password
 const signUpWithEmail = async (email, password) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -40,7 +37,6 @@ const signInWithEmail = async (email, password) => {
   }
 };
 
-// Function to log out
 const logOut = () => {
   signOut(auth).then(() => {
     console.log('User signed out');

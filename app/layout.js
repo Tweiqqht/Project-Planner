@@ -27,7 +27,6 @@ const Layout = ({ children }) => {
 
     return () => unsubscribe();
   }, []);
-
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(savedDarkMode);
@@ -37,12 +36,10 @@ const Layout = ({ children }) => {
       document.body.classList.remove('dark-mode');
     }
   }, []);
-
   const toggleFragment = (type) => {
     setIsLogin(type === 'login');
     setShowFragment(true);
   };
-
   const handleAuth = async (e) => {
     e.preventDefault();
     try {
@@ -59,12 +56,9 @@ const Layout = ({ children }) => {
           userId: user.uid,
           email: email,
         });
-  
         console.log("User document created with ID:", docRef.id);
       }
-      closeFragment(); // Close the fragment after successful login/register
-  
-      // Reset the email, password, and confirmPassword fields
+      closeFragment();
       setEmail("");
       setPassword("");
       setConfirmPassword("");
@@ -75,7 +69,6 @@ const Layout = ({ children }) => {
   
   const closeFragment = () => {
     setShowFragment(false);
-    // Reset the email, password, and confirmPassword fields when closing the fragment
     setEmail('');
     setPassword('');
     setConfirmPassword('');
@@ -129,7 +122,6 @@ const Layout = ({ children }) => {
             </div>
           </header>
           <main>{children}</main>
-
           {showFragment && (
             <div className="fragment-overlay">
               <div className="fragment">
